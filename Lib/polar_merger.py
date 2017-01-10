@@ -24,6 +24,20 @@ along with RAVE.  If not, see <http://www.gnu.org/licenses/>.
 import _raveio, _polarvolume, _polarscan, _rave
 import datetime, math
 
+# Removes fluff from a source identifier string.
+# At the moment, this means removing the CMT: field,
+# which should not affect the decision whether or not two sources are the same.
+def remove_fluff(source_str):
+  # parse the ident string
+  items = [key_colon_val.split(':') for key_colon_val in source_str.split(',')]
+
+  # serialise the ident string back
+  return ','.join(
+    '%s:%s' % (key, val)
+    for key, val in items
+    if key != 'CMT'
+  )
+
 ##
 # Helps with merging scans or volumes containing different parameters but where date/time & source matches. The
 # date/time is matched on a nominal time base. Which means that if for example interval = 15, then scans from 00:00 -> 14:59
@@ -60,7 +74,7 @@ class polar_merger(object):
         source = obj.source
         dtstr=objdtstr
 
-      if source != obj.source or dtstr != objdtstr:
+      if remove_fluff(source) != remove_fluff(obj.source) or dtstr != objdtstr:
         raise TypeError, "source, date and time must be identical when merging"
 
     self._verify_elangles(robjs)
@@ -164,4 +178,4 @@ if __name__=="__main__":
   rio.save("scan.h5")
 
 
-
+# vim: ts=2 sts=2 sw=2 et
